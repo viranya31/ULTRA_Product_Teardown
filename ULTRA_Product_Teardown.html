@@ -1,0 +1,588 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Ultra Teardown Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* A different format on purpose: light paper, one screen at a time (tabs), an annotated app sketch with numbered hotspots and a before/after switch, and a kanban for the morning queue. */
+:root {
+  color-scheme: light;
+  --paper: #f5efe3; --card: #fffdf8; --ink: #1c1a15; --muted: #625c4c; --line: #ddd3be; --line2: #c3b79c;
+  --accent: #e4572e; --accent-ink: #b8330f; --blue: #2349c9; --green: #1b7a52; --lilac: #6b46c1; --grey: #6a6455;
+  --amber: #ffc766; --amber-ink: #8a5a00; --nightbar: #c9cef3;
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.55; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); min-height: 100vh;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 32px 32px; background-position: -1px -1px; }
+body::before { content: ""; position: fixed; inset: 0; background: var(--paper); opacity: 0.82; pointer-events: none; z-index: 0; }
+h1, h2, h3, h4, p { margin: 0; }
+button { font: inherit; color: inherit; }
+.app { position: relative; z-index: 1; width: min(1180px, 100% - 32px); margin: 0 auto; padding: 18px 0 70px; }
+button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.mono { font-family: var(--mono); }
+.small { font-size: 14px; color: var(--muted); }
+a { color: var(--blue); }
+
+/* header and tabs */
+.top { display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; align-items: flex-end; padding-bottom: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.mark { width: 40px; height: 40px; border: 2px solid var(--ink); border-radius: 10px; display: grid; place-items: center; font-family: var(--serif); font-weight: 800; font-size: 22px; background: var(--amber); }
+.brand b { font-family: var(--serif); font-size: 24px; font-weight: 800; letter-spacing: -0.01em; display: block; line-height: 1.1; }
+.brand span { font-size: 13.5px; color: var(--muted); }
+.hint { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 0 0 2px; border-bottom: 2px solid var(--ink); scrollbar-width: thin; }
+.tab { background: transparent; border: 2px solid transparent; border-bottom: 0; border-radius: 12px 12px 0 0; padding: 10px 16px; cursor: pointer; font-weight: 700; white-space: nowrap; color: var(--muted); flex: none; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--card); border-color: var(--ink); color: var(--ink); margin-bottom: -2px; padding-bottom: 12px; }
+.tab .n { font-family: var(--mono); font-size: 11.5px; margin-right: 8px; color: var(--accent-ink); }
+.panel { background: var(--card); border: 2px solid var(--ink); border-top: 0; border-radius: 0 0 20px 20px; padding: clamp(18px, 3vw, 34px); box-shadow: 6px 6px 0 var(--ink); animation: in 0.35s ease; }
+@keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
+h2 { font-family: var(--serif); font-weight: 800; font-size: clamp(30px, 5vw, 54px); line-height: 1.04; letter-spacing: -0.02em; text-wrap: balance; }
+h2 em { font-style: normal; color: var(--accent-ink); }
+.lede { font-size: clamp(17px, 2vw, 19.5px); color: var(--muted); max-width: 62ch; margin-top: 12px; }
+h3 { font-family: var(--serif); font-weight: 600; font-size: 24px; letter-spacing: -0.01em; }
+.lab { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-ink); margin-bottom: 4px; }
+
+/* tags, chips, buttons */
+.tag { display: inline-flex; gap: 6px; align-items: center; font-family: var(--mono); font-size: 11.5px; padding: 1px 9px; border: 1.5px solid; border-radius: 999px; background: var(--card); white-space: nowrap; line-height: 1.7; }
+.t-seen { color: var(--green); border-color: var(--green); } .t-reported { color: var(--blue); border-color: var(--blue); } .t-inferred { color: var(--lilac); border-color: var(--lilac); }
+.t-proposed { color: var(--accent-ink); border-color: var(--accent-ink); } .t-notseen { color: var(--grey); border-color: var(--grey); border-style: dashed; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { background: var(--ink); color: var(--card); border: 2px solid var(--ink); border-radius: 10px; padding: 9px 16px; font-weight: 700; cursor: pointer; }
+.btn:hover { background: #3a362b; }
+.btn.alt { background: var(--card); color: var(--ink); } .btn.alt:hover { background: var(--amber); }
+.btn[disabled] { opacity: 0.4; cursor: default; }
+.chip { background: var(--card); border: 2px solid var(--ink); border-radius: 999px; padding: 5px 14px; cursor: pointer; font-weight: 600; font-size: 14.5px; }
+.chip:hover { background: var(--amber); } .chip[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.card { background: var(--card); border: 2px solid var(--ink); border-radius: 16px; padding: 18px; }
+.note { border: 2px dashed var(--accent); background: #fff3ec; border-radius: 12px; padding: 10px 14px; font-size: 15px; }
+
+/* overview */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 24px 0; }
+@media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { border: 2px solid var(--ink); border-radius: 16px; padding: 14px 16px; background: var(--card); }
+.stat b { display: block; font-family: var(--serif); font-weight: 800; font-size: clamp(34px, 5vw, 52px); line-height: 1; color: var(--accent-ink); }
+.stat span { font-size: 14.5px; color: var(--muted); display: block; margin: 6px 0; }
+.clockbox { border: 2px solid var(--ink); border-radius: 16px; padding: 16px 18px; background: #fffaf0; }
+.clockbox input[type=range] { width: 100%; margin: 12px 0 6px; }
+input[type=range] { -webkit-appearance: none; appearance: none; height: 30px; background: transparent; cursor: pointer; min-width: 0; }
+input[type=range].day::-webkit-slider-runnable-track { height: 16px; border-radius: 8px; border: 2px solid var(--ink); background: linear-gradient(90deg, var(--nightbar) 0 39.58%, var(--amber) 39.58% 77.08%, var(--nightbar) 77.08% 100%); }
+input[type=range].day::-moz-range-track { height: 12px; border-radius: 8px; border: 2px solid var(--ink); background: linear-gradient(90deg, var(--nightbar) 0 39.58%, var(--amber) 39.58% 77.08%, var(--nightbar) 77.08% 100%); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); border: 3px solid var(--ink); margin-top: -9px; }
+input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 3px solid var(--ink); }
+input[type=range].plain::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; background: var(--line2); }
+input[type=range].plain::-moz-range-track { height: 6px; border-radius: 4px; background: var(--line2); }
+.ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.cstate { font-family: var(--serif); font-weight: 800; font-size: 26px; line-height: 1.15; }
+.cstate.on { color: var(--green); } .cstate.off { color: var(--accent-ink); }
+.verdict { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.verdict li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+.verdict li > i { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-style: normal; font-family: var(--mono); font-weight: 500; font-size: 13px; background: var(--amber); }
+
+/* board */
+.board { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; margin-top: 22px; align-items: start; }
+@media (max-width: 900px) { .board { grid-template-columns: minmax(0, 1fr); } }
+.toggle { display: inline-flex; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.toggle button { background: var(--card); border: 0; padding: 7px 18px; cursor: pointer; font-weight: 700; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+.wf { border: 2px solid var(--ink); border-radius: 14px; background: #fff; padding: 12px; display: grid; gap: 12px; position: relative; font-size: 13.5px; }
+.wf .bar { display: flex; gap: 10px; align-items: center; border-bottom: 2px solid var(--line); padding-bottom: 8px; font-family: var(--mono); font-size: 12px; }
+.wf .bar span { padding: 2px 8px; border-radius: 6px; }
+.wf .bar .on { background: var(--ink); color: #fff; }
+.wf .head { font-family: var(--serif); font-weight: 600; font-size: 18px; line-height: 1.2; }
+.el { position: relative; }
+.hs { position: absolute; top: -11px; right: -11px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ink); background: var(--amber); font-family: var(--mono); font-weight: 500; font-size: 13px; cursor: pointer; z-index: 3; display: grid; place-items: center; padding: 0; }
+.hs:hover { transform: scale(1.12); }
+.hs[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.hs[aria-pressed="false"]::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--accent); animation: ring 1.8s infinite; }
+@keyframes ring { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hs[aria-pressed="false"]::after { animation: none; opacity: 0.4; } }
+.kyc { background: var(--ink); color: #fff; border-radius: 10px; padding: 10px 14px; font-weight: 600; }
+.kyc small { display: block; font-weight: 400; opacity: 0.85; }
+.deals2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 520px) { .deals2 { grid-template-columns: minmax(0, 1fr); } }
+.dc { border: 2px solid var(--ink); border-radius: 10px; padding: 10px; display: grid; gap: 6px; background: #fffdf8; position: relative; }
+.dc b { font-size: 14px; line-height: 1.2; }
+.dc .bd { font-family: var(--mono); font-size: 10.5px; background: var(--amber); border-radius: 999px; padding: 1px 8px; justify-self: start; }
+.dc .f { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; font-family: var(--mono); font-size: 11.5px; }
+.dc .f i { font-style: normal; color: var(--muted); display: block; font-size: 10px; text-transform: uppercase; }
+.dc .f s { color: var(--muted); }
+.chipf { font-family: var(--mono); font-size: 11px; border-radius: 999px; padding: 1px 8px; justify-self: start; }
+.chipf.red { background: #ffd9d0; color: #8c1d05; } .chipf.blue { background: #d6e2ff; color: #17368f; }
+.support { justify-self: end; border: 2px solid var(--ink); border-radius: 12px; padding: 8px 12px; display: flex; gap: 10px; align-items: center; background: #fff; width: fit-content; max-width: 100%; position: relative; }
+.support .av { width: 30px; height: 30px; border-radius: 50%; background: var(--line2); display: grid; place-items: center; font-weight: 700; flex: none; }
+.add { display: none; border: 2px dashed var(--accent); border-radius: 8px; padding: 4px 8px; font-size: 12px; color: var(--accent-ink); background: #fff3ec; font-weight: 600; }
+[data-mode="after"] .add { display: block; }
+[data-mode="after"] .before-only { display: none; }
+.after-support { display: none; }
+[data-mode="after"] .after-support { display: flex; }
+.panelr { position: sticky; top: 12px; }
+@media (max-width: 900px) { .panelr { position: static; } }
+.finding h3 { margin-bottom: 8px; }
+.finding .row { margin-top: 12px; }
+.finding .row p { font-size: 15.5px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14.5px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.effort { display: inline-flex; gap: 4px; vertical-align: middle; } .effort i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); } .effort i.f { background: var(--ink); }
+.thumbs { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+/* night shift (kanban) */
+.ctl { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: end; margin: 22px 0 14px; }
+.ctl label { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); display: block; margin-bottom: 4px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+@media (max-width: 700px) { .kpis { grid-template-columns: minmax(0, 1fr); } }
+.kpi b { font-family: var(--serif); font-size: 40px; font-weight: 800; line-height: 1; display: block; }
+.kpi span { font-size: 14px; color: var(--muted); }
+.k-board { display: grid; gap: 12px; align-items: start; }
+.k-board.today { grid-template-columns: minmax(0, 1fr); }
+.k-board.helper { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .k-board.helper { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .k-board.helper { grid-template-columns: minmax(0, 1fr); } }
+.col { border: 2px solid var(--ink); border-radius: 14px; background: #fffaf0; padding: 10px; min-height: 120px; }
+.col h4 { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 6px; }
+.pile { display: flex; flex-wrap: wrap; gap: 8px; }
+.rq { text-align: left; border: 2px solid var(--ink); border-radius: 10px; background: #fff; padding: 6px 10px; cursor: pointer; font-size: 13.5px; line-height: 1.3; display: block; width: 100%; }
+.pile .rq { width: auto; }
+.rq:hover { background: var(--amber); }
+.rq[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.rq small { display: block; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.rq[aria-pressed="true"] small { color: #ddd; }
+.rq.hi { border-left: 8px solid var(--accent); }
+.rq.done { border-style: dashed; opacity: 0.7; text-decoration: line-through; }
+.col .stack { display: grid; gap: 8px; }
+.detail { border: 2px solid var(--ink); border-radius: 14px; background: var(--card); padding: 14px 16px; margin-top: 14px; }
+.msg { border: 1.5px solid var(--line2); background: #fff; border-radius: 10px; padding: 10px 12px; font-size: 14.5px; margin-top: 8px; }
+.msg.me { background: #e9edff; border-color: #aab7f2; }
+
+/* plan */
+.phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+@media (max-width: 860px) { .phases { grid-template-columns: minmax(0, 1fr); } }
+.ph { text-align: left; border: 2px solid var(--ink); border-radius: 16px; background: #fff; padding: 14px 16px; cursor: pointer; position: relative; }
+.ph:hover { background: #fffaf0; }
+.ph b { font-family: var(--serif); font-size: 21px; display: block; }
+.ph span { font-size: 14.5px; color: var(--muted); }
+.ph[aria-pressed="true"] { background: var(--amber); }
+.ph.done { background: #dff3e8; border-color: var(--green); }
+.ph.locked { opacity: 0.55; }
+.ph.focus::before { content: "the helper"; position: absolute; top: -11px; left: 14px; font-family: var(--mono); font-size: 11px; background: var(--accent); color: #fff; padding: 1px 8px; border-radius: 999px; }
+.own { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 15px; }
+.own th { text-align: left; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 8px; border-bottom: 2px solid var(--ink); }
+.own td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+
+/* rules */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; margin-top: 22px; align-items: start; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.gq { font-family: var(--serif); font-weight: 600; font-size: 26px; line-height: 1.2; margin: 8px 0 12px; }
+.opts { display: grid; gap: 8px; }
+.opt { text-align: left; border: 2px solid var(--ink); border-radius: 12px; background: #fff; padding: 10px 14px; cursor: pointer; display: grid; }
+.opt:hover { background: var(--amber); } .opt b { font-size: 16px; } .opt span { font-size: 13.5px; color: var(--muted); }
+.opt.right { background: #dff3e8; border-color: var(--green); } .opt.wrong { background: #ffe1d9; border-color: var(--accent-ink); }
+.opt[disabled] { cursor: default; }
+.prog { display: flex; gap: 5px; margin-bottom: 8px; } .prog i { flex: 1; height: 7px; border-radius: 4px; background: var(--line); } .prog i.ok { background: var(--green); } .prog i.no { background: var(--accent); } .prog i.cur { background: var(--ink); }
+.risks { display: grid; gap: 10px; }
+.risk { text-align: left; border: 2px solid var(--ink); border-radius: 12px; background: #fff; padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; }
+.risk:hover { background: #fffaf0; }
+.risk .k { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-ink); }
+.risk[aria-pressed="true"] { background: #dff3e8; } .risk[aria-pressed="true"] .k { color: var(--green); }
+
+/* check */
+.todo { display: grid; gap: 8px; margin-top: 20px; }
+.todo label { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; border: 2px solid var(--ink); border-radius: 12px; padding: 10px 14px; background: #fff; cursor: pointer; align-items: start; }
+.todo input { width: 20px; height: 20px; accent-color: var(--ink); margin-top: 3px; }
+.todo label.on { background: #dff3e8; text-decoration: line-through; color: var(--muted); }
+.meterb { height: 14px; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: #fff; margin: 14px 0 6px; } .meterb i { display: block; height: 100%; background: var(--green); width: 0; transition: width 0.4s; }
+.srcs { columns: 2 300px; column-gap: 28px; padding-left: 20px; font-size: 14.5px; } .srcs li { margin-bottom: 6px; break-inside: avoid; }
+.foot { margin-top: 18px; text-align: center; }
+</style>
+
+</head><body><div class="app">
+  <header class="top">
+    <div class="brand"><div class="mark" aria-hidden="true">U</div><div><b>Ultra Teardown Board</b><span>A product teardown in plain words</span></div></div>
+    <div class="hint">Tip: use the &larr; &rarr; keys on the tabs</div>
+  </header>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Teardown sections"></div>
+
+  <!-- 1 OVERVIEW -->
+  <section class="panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+    <div class="lab">The one-page version</div>
+    <h2>Ultra looks good in the day. <em>At night, nobody answers.</em></h2>
+    <p class="lede">Ultra is an app from Tap Invest where people put money into short-term loans to businesses and other fixed-return products. We studied what it shows, where it helps, and what happens when you have a question out of office hours.</p>
+    <div class="stats" id="stats"></div>
+    <div class="clockbox">
+      <div class="lab">Drag to any time of day</div>
+      <div class="cstate" id="cstate" role="status" aria-live="polite"></div>
+      <input type="range" class="day" id="day" min="0" max="23.75" step="0.25" value="21.75" aria-label="Time of day">
+      <div class="ticks" aria-hidden="true"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div>
+      <p class="small" id="cwait" style="margin-top:8px"></p>
+      <p class="small">Amber = a person is reported to be available (9:30 am to 6:30 pm). Blue = nobody. Weekend hours are not known. <span class="tag t-reported" title="The company or a news source says so; we have not checked">&#9670; Reported</span></p>
+    </div>
+    <h3 style="margin-top:28px">The verdict in five lines</h3>
+    <ol class="verdict" id="verdict"></ol>
+    <p class="small" style="margin-top:20px" id="tagkey"></p>
+  </section>
+
+  <!-- 2 BOARD -->
+  <section class="panel" id="panel-board" role="tabpanel" aria-labelledby="tab-board" hidden>
+    <div class="lab">Annotated sketch</div>
+    <h2>Tap the numbers. <em>See what we found.</em></h2>
+    <p class="lede">This is our own simple sketch of the dashboard we screenshotted, using its real deal numbers. It is a redraw, not Ultra&rsquo;s design. Flip to &ldquo;After&rdquo; to see our proposed fixes.</p>
+    <div style="margin-top:16px" class="toggle" role="group" aria-label="Before or after"><button type="button" id="b-before" aria-pressed="true">Before (what we saw)</button><button type="button" id="b-after" aria-pressed="false">After (our idea)</button></div>
+    <div class="board">
+      <div class="wf" id="wf" data-mode="before" aria-label="Sketch of the Ultra dashboard with numbered notes">
+        <div class="bar"><span class="on">Invoice Discounting</span><span>Dashboard</span></div>
+        <div class="head">Your portfolio deserves the stability of proven invoice investments.</div>
+        <div class="el kyc" id="el-1">Complete KYC to get full access<small>Under 2 minutes. PAN, Aadhaar, bank details.</small></div>
+        <div class="deals2" id="deals2"></div>
+        <div class="el" id="el-6" style="justify-self:end">
+          <div class="support before-only"><span class="av">R</span><span><b>Ram</b><br><span class="small">offline &middot; Quick Chat</span></span></div>
+          <div class="support after-support"><span class="av" style="background:var(--amber)">AI</span><span><b>Ask anytime</b><br><span class="small">helper online 24 hours &middot; talk to a person</span></span></div>
+        </div>
+      </div>
+      <div class="panelr"><div class="card finding" id="finding" aria-live="polite"></div></div>
+    </div>
+  </section>
+
+  <!-- 3 NIGHT SHIFT -->
+  <section class="panel" id="panel-night" role="tabpanel" aria-labelledby="tab-night" hidden>
+    <div class="lab">Our idea, with made-up numbers</div>
+    <h2>The morning queue, <em>before and after</em></h2>
+    <p class="lede">Imagine a night of requests. Today they land in one pile for the team at 9:30 am. With the helper, easy ones are answered overnight and the rest are sorted to the right owner, urgent first. <span class="tag t-proposed">&#9733; Proposed</span></p>
+    <div class="ctl">
+      <div><label for="nreq">Requests overnight (made up)</label><input type="range" class="plain" id="nreq" min="6" max="24" step="1" value="14" style="width:220px" aria-label="Number of overnight requests"><b class="mono" id="nreqv" style="margin-left:8px"></b></div>
+      <div class="toggle" role="group" aria-label="View"><button type="button" id="v-today" aria-pressed="true">Today</button><button type="button" id="v-helper" aria-pressed="false">With the helper</button></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div id="kboard"></div>
+    <div class="detail" id="rdetail" aria-live="polite"><p class="small">Tap a request to see what the helper would do with it.</p></div>
+    <p class="small" style="margin-top:12px">The mix of requests is invented to show the idea. Real numbers need Ultra&rsquo;s own support data. The helper never asks for PAN, Aadhaar or bank details, and never says which deal to pick.</p>
+  </section>
+
+  <!-- 4 PLAN -->
+  <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <div class="lab">What to build, in order</div>
+    <h2>Route first. <em>Then help at night.</em></h2>
+    <p class="lede">Routing is cheaper, needs no AI, and the helper depends on it. A helper that cannot hand a request to an owner just moves the pile somewhere else. Pass each gate to unlock the next step.</p>
+    <div class="phases" id="phases" role="group" aria-label="Build steps"></div>
+    <div class="card" id="phasedetail" style="margin-top:16px" aria-live="polite"></div>
+    <h3 style="margin-top:28px">Who owns what <span class="tag t-proposed">&#9733; Suggested roles</span></h3>
+    <table class="own"><thead><tr><th>Role</th><th>Owns</th></tr></thead><tbody>
+      <tr><td><b>Product</b></td><td>What the helper does and does not do</td></tr>
+      <tr><td><b>Engineering</b></td><td>The automatic message to Slack and Jira, and the account look-ups</td></tr>
+      <tr><td><b>Support</b></td><td>The routing table and the morning queue</td></tr>
+      <tr><td><b>Compliance</b></td><td>The advice line and how private details are handled</td></tr></tbody></table>
+    <p class="small" style="margin-top:10px">Steps are in order, not dated, because we do not know the team&rsquo;s capacity.</p>
+  </section>
+
+  <!-- 5 RULES -->
+  <section class="panel" id="panel-rules" role="tabpanel" aria-labelledby="tab-rules" hidden>
+    <div class="lab">The helper&rsquo;s rules</div>
+    <h2>Where should each answer <em>come from?</em></h2>
+    <p class="lede">Three ways to deal with a question. &ldquo;RAG&rdquo; is just the first: look up the right help page, then answer from it. Try the quiz, then flip the risk cards.</p>
+    <div class="two">
+      <div class="card" id="game" aria-live="polite"></div>
+      <div><h3 style="margin-bottom:10px">Six risks. Tap to flip.</h3><div class="risks" id="risks"></div></div>
+    </div>
+    <div class="note" style="margin-top:20px"><b>Background.</b> On 18 Nov 2024 SEBI, India&rsquo;s market regulator, issued an interim order (made without hearing the other side first) naming four entities, including Purple Petal Invest, which runs Tap Invest. We do not know what happened next. That is why the helper must stay on the support side of the advice line.</div>
+  </section>
+
+  <!-- 6 CHECK -->
+  <section class="panel" id="panel-check" role="tabpanel" aria-labelledby="tab-check" hidden>
+    <div class="lab">Honest limits</div>
+    <h2>Seven things <em>to confirm</em></h2>
+    <p class="lede">Money is a serious topic, so here is what we could not check. Tick each one as the team does.</p>
+    <div class="meterb" aria-hidden="true"><i id="tm"></i></div>
+    <p class="small" id="ttxt"></p>
+    <div class="todo" id="todo"></div>
+    <h3 style="margin-top:30px;margin-bottom:8px">Sources</h3>
+    <ul class="srcs">
+      <li><a href="https://apps.apple.com/app/id6738425065">Ultra by Tap, App Store</a></li>
+      <li><a href="https://tapinvest.in/">Tap Invest</a> and <a href="https://tapinvest.in/products">products</a></li>
+      <li><a href="https://www.sebi.gov.in/sebi_data/attachdocs/nov-2024/1731934203234_1.pdf">SEBI interim order, 18 Nov 2024</a></li>
+      <li><a href="https://blog.thealtinvestor.in/company-profile-tap-invest-fixed-income-opportunities-platform">The Alt Investor company profile</a></li>
+      <li><a href="https://inc42.com/buzz/tap-invest-funding-debt-investment-opportunities/">Inc42 funding report, Oct 2023</a></li>
+      <li><a href="https://catalyzerx.beehiiv.com/p/tap-invest">CatalyzeX profile, Apr 2024</a></li>
+      <li><a href="https://www.appbrain.com/appstore/ultra-by-tap/ios-6738425065">AppBrain listing</a></li>
+      <li>Dashboard screenshot supplied by the author, 17 Oct 2026</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  function h(tag, props, kids) {
+    var e = document.createElement(tag);
+    if (props) Object.keys(props).forEach(function (k) {
+      var v = props[k];
+      if (k === "class") e.className = v; else if (k === "text") e.textContent = v;
+      else if (k.slice(0, 2) === "on") e.addEventListener(k.slice(2), v);
+      else if (v === true) e.setAttribute(k, ""); else if (v !== false && v != null) e.setAttribute(k, v);
+    });
+    (kids || []).forEach(function (c) { if (c == null || c === false) return; e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return e;
+  }
+  var TAGS = {
+    seen: ["● Seen", "We saw it ourselves in the app or on a screenshot"], reported: ["◆ Reported", "The company or a news source says so; we have not checked"],
+    inferred: ["▲ Inferred", "Our best reading of what we saw"], proposed: ["★ Proposed", "Our idea; Ultra does not do this today"], notseen: ["○ Not seen yet", "We have not looked at this yet"]
+  };
+  function tag(k) { return h("span", { class: "tag t-" + k, title: TAGS[k][1], text: TAGS[k][0] }); }
+  function fmtTime(t) { var hh = Math.floor(t), mm = Math.round((t - hh) * 60), ap = hh >= 12 ? "PM" : "AM", h12 = hh % 12 === 0 ? 12 : hh % 12; return h12 + ":" + (mm < 10 ? "0" : "") + mm + " " + ap; }
+  function dur(hrs) { var m = Math.round(hrs * 60), hh = Math.floor(m / 60), mm = m % 60; return hh + " h" + (mm ? " " + mm + " min" : ""); }
+  function inr(n) { return "₹" + Math.round(n).toLocaleString("en-IN"); }
+
+  /* ---------- tabs ---------- */
+  var TABS = [["overview", "Overview"], ["board", "Teardown board"], ["night", "Night shift"], ["plan", "Build plan"], ["rules", "Rules and risks"], ["check", "To confirm"]];
+  function buildTabs() {
+    var box = $("#tabs");
+    TABS.forEach(function (t, i) {
+      var b = h("button", { type: "button", class: "tab", role: "tab", id: "tab-" + t[0], "aria-controls": "panel-" + t[0], "aria-selected": "false", tabindex: "-1" }, [h("span", { class: "n", text: String(i + 1) }), t[1]]);
+      b.addEventListener("click", function () { show(i, true); });
+      b.addEventListener("keydown", function (e) {
+        var n = i; if (e.key === "ArrowRight") n = (i + 1) % TABS.length; else if (e.key === "ArrowLeft") n = (i + TABS.length - 1) % TABS.length; else if (e.key === "Home") n = 0; else if (e.key === "End") n = TABS.length - 1; else return;
+        e.preventDefault(); show(n, true); $("#tab-" + TABS[n][0]).focus();
+      });
+      box.appendChild(b);
+    });
+  }
+  function show(i, push) {
+    TABS.forEach(function (t, j) {
+      var b = $("#tab-" + t[0]), p = $("#panel-" + t[0]), on = i === j;
+      b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; p.hidden = !on;
+    });
+    if (push) { try { history.replaceState(null, "", "#" + TABS[i][0]); } catch (e) {} var tb = $("#tabs").getBoundingClientRect(); if (tb.top < 0) window.scrollTo({ top: window.scrollY + tb.top - 8, behavior: "auto" }); }
+  }
+
+  /* ---------- overview ---------- */
+  function buildOverview() {
+    var S = [["15 of 24", "hours a day with no human to ask", "reported"], ["4", "facts on every deal card, none about risk", "seen"], ["4 of 8", "journey steps we could actually see", "seen"], ["5", "problems found; one ranked first", "inferred"]];
+    S.forEach(function (x) { $("#stats").appendChild(h("div", { class: "stat" }, [h("b", { text: x[0] }), h("span", { text: x[1] }), tag(x[2])])); });
+    var V = [
+      ["Ultra makes deals easy to compare: every card shows the same four facts.", "seen"],
+      ["Deals can be browsed before the identity check (KYC), and its promise is clear: under 2 minutes.", "seen"],
+      ["Nothing explains the yearly return rate (XIRR), and nothing shows risk, who pays, or past delays.", "seen"],
+      ["People who have already invested cannot get help in the evening. The FAQ cannot answer “where is my money?”.", "seen"],
+      ["Our idea: send each request straight to the right person, then add a chat helper that answers what it can and never says which deal to pick.", "proposed"]
+    ];
+    V.forEach(function (v, i) { $("#verdict").appendChild(h("li", {}, [h("i", { text: String(i + 1) }), h("div", {}, [h("span", { text: v[0] + " " }), tag(v[1])])])); });
+    var tk = $("#tagkey"); tk.appendChild(document.createTextNode("Tag key: ")); ["seen", "reported", "inferred", "proposed", "notseen"].forEach(function (k) { tk.appendChild(tag(k)); tk.appendChild(document.createTextNode(" ")); });
+    var d = $("#day");
+    function upd() {
+      var t = parseFloat(d.value), on = t >= 9.5 && t < 18.5, c = $("#cstate");
+      c.className = "cstate " + (on ? "on" : "off");
+      c.textContent = fmtTime(t) + ": " + (on ? "Ram is online. A person can reply." : "Ram is offline. You are on your own.");
+      $("#cwait").textContent = on ? "Office hours end in " + dur(18.5 - t) + "." : "The next person is back in " + dur(t < 9.5 ? 9.5 - t : 24 - t + 9.5) + ".";
+    }
+    d.addEventListener("input", upd); upd();
+  }
+
+  /* ---------- board ---------- */
+  var DEALS = [
+    { n: "Buoyancy Plastics For Change", b: "Kickstarter", r: "10%", x: "13.25%", was: "13.00%", d: "32 days", m: "₹10,000", chip: "blue" },
+    { n: "MS Agrotech", b: "Navratri Special", r: "77%", x: "14.32%", was: "14.00%", d: "93 days", m: "₹49,000", chip: "red" },
+    { n: "Buoyancy Plastics For Change", b: "", r: "83%", x: "13.25%", was: "", d: "32 days", m: "₹49,000", chip: "red" },
+    { n: "Whatnot x Pai International", b: "", r: "14%", x: "13.50%", was: "", d: "47 days", m: "₹49,000", chip: "blue" }
+  ];
+  var F = {
+    1: { t: "The identity-check card", tags: ["seen"], saw: "Deals are visible before the check is done. A dark card says “Complete KYC to get full access”, promises under 2 minutes, and lists PAN, Aadhaar and bank details.", why: "A clear promise builds trust: people know the cost before they pay it. We do not know what happens if a step fails.", fix: "Keep it. Add “Stuck? Ask anytime” so a failed step at night is not a dead end.", effort: 1 },
+    2: { t: "Four facts on every card", tags: ["seen"], saw: "Each card shows the yearly return, how long the deal lasts, the smallest amount and how much is funded. No risk rating, no payer name, no record of past delays.", why: "Cards are easy to compare, but people cannot judge risk from them. This is a decision about information and rules, so the chat helper must never fill the gap by guessing.", fix: "Add space for risk and who pays, once the deals team and compliance decide what may be shown.", effort: 3 },
+    3: { t: "The yearly rate (XIRR) is not explained", tags: ["seen"], saw: "XIRR has no explanation on this screen.", why: "A 32-day deal still shows a yearly figure, so what you actually earn over those days is only a small part of it. First-time investors can easily misread that.", fix: "A short pop-up next to the number, and the chat helper can explain it on request.", effort: 1 },
+    4: { t: "Cards that look alike", tags: ["seen", "inferred"], saw: "Two cards share the same title and description. Only the badge and the smallest amount differ. Badges like “Navratri Special” look like seasonal promotion.", why: "People comparing deals have to work out the differences themselves.", fix: "Give each card its own short description and show what makes it different.", effort: 1 },
+    5: { t: "Red and blue “funded” chips", tags: ["inferred"], saw: "The 77% and 83% funded deals have red chips. The 10% and 14% deals have blue ones.", why: "Red probably signals “filling up fast”, which creates urgency. This is our reading; Ultra does not say.", fix: "Use plain wording such as “83% funded” and avoid colour that pushes people to hurry.", effort: 1 },
+    6: { t: "Help is one person, and he is offline", tags: ["seen", "reported"], saw: "The dashboard shows “Ram, offline” with a Quick Chat link. The hours are reported as 9:30 am to 6:30 pm, which leaves 15 of 24 hours uncovered.", why: "People who already invested have questions about their own money, and an FAQ cannot answer those or take a request.", fix: "A helper that is on all night, answers what it can, and passes the rest to the right person with a reference number.", effort: 3 }
+  };
+  var sel = 0;
+  function buildBoard() {
+    var dg = $("#deals2");
+    DEALS.forEach(function (d, i) {
+      var id = i + 1, el = h("div", { class: "dc el", id: "dc-" + i }, [
+        d.b ? h("span", { class: "bd", text: d.b }) : null, h("b", { text: d.n }),
+        h("div", { class: "f" }, [h("div", {}, [h("i", { text: "Yearly return" }), d.x, d.was ? h("s", { text: " " + d.was }) : null]), h("div", {}, [h("i", { text: "Lasts" }), d.d]), h("div", {}, [h("i", { text: "Smallest" }), d.m]), h("div", {}, [h("i", { text: "Funded" }), h("span", { class: "chipf " + d.chip, text: d.r })])]),
+        h("div", { class: "add", text: "Risk and who pays: needs the deals team" }),
+        i === 1 ? h("div", { class: "add", text: "Explains the ... ⓘ yearly return" }) : null
+      ]);
+      dg.appendChild(el);
+    });
+    // hotspots
+    function hs(n, host) { var b = h("button", { type: "button", class: "hs", "aria-pressed": "false", "aria-label": "Note " + n + ": " + F[n].t, text: String(n), onclick: function () { pick(n); } }); host.appendChild(b); }
+    hs(1, $("#el-1")); hs(2, $("#dc-0")); hs(3, $("#dc-1")); hs(4, $("#dc-2")); hs(5, $("#dc-3")); hs(6, $("#el-6"));
+    $("#b-before").addEventListener("click", function () { mode("before"); }); $("#b-after").addEventListener("click", function () { mode("after"); });
+    pick(6);
+  }
+  function mode(m) { $("#wf").setAttribute("data-mode", m); $("#b-before").setAttribute("aria-pressed", String(m === "before")); $("#b-after").setAttribute("aria-pressed", String(m === "after")); renderFinding(); }
+  function pick(n) { sel = n; Array.prototype.forEach.call(document.querySelectorAll(".hs"), function (b) { b.setAttribute("aria-pressed", String(b.textContent === String(n))); }); renderFinding(); }
+  function renderFinding() {
+    var f = F[sel], box = $("#finding"), after = $("#wf").getAttribute("data-mode") === "after"; box.textContent = "";
+    box.appendChild(h("div", { class: "lab", text: "Note " + sel }));
+    box.appendChild(h("h3", { text: f.t })); box.appendChild(h("div", { class: "tags", style: "margin-top:8px" }, f.tags.map(tag)));
+    box.appendChild(h("div", { class: "row" }, [h("div", { class: "lab", text: "What we saw" }), h("p", { text: f.saw })]));
+    box.appendChild(h("div", { class: "row" }, [h("div", { class: "lab", text: "Why it matters" }), h("p", { text: f.why })]));
+    var fx = h("div", { class: "row" + (after ? " note" : "") }, [h("div", { class: "lab", text: "Our fix" }), h("p", { text: f.fix }), h("p", { class: "small", style: "margin-top:6px" }, [tag("proposed"), " Rough effort (our guess): ", h("span", { class: "effort", "aria-label": f.effort + " of 3" }, [1, 2, 3].map(function (k) { return h("i", { class: k <= f.effort ? "f" : "" }); }))])]);
+    box.appendChild(fx);
+    var nav = h("div", { class: "thumbs" }); for (var k = 1; k <= 6; k++) (function (k) { nav.appendChild(h("button", { type: "button", class: "chip", "aria-pressed": String(k === sel), text: String(k), "aria-label": "Note " + k, onclick: function () { pick(k); } })); })(k);
+    box.appendChild(nav);
+  }
+
+  /* ---------- night shift ---------- */
+  var RT = {
+    late: { l: "Payout date passed", owner: "Senior support", pri: "High", kind: "ticket", reply: "I am sorry for the worry. In this demo I cannot see a real account, so I will not guess. Because the date has passed, I have passed this to Senior support as a high-priority request.", slack: "Money not arrived: payout date has passed" },
+    dispute: { l: "Complaint about a deal", owner: "Senior support", pri: "High", kind: "ticket", reply: "I am sorry about that. I cannot settle a complaint myself, so I have passed it to Senior support as a high-priority request.", slack: "Complaint about a deal" },
+    kyc: { l: "Identity check stuck", owner: "Onboarding", pri: "Normal", kind: "ticket", reply: "The check needs your PAN, Aadhaar and bank details. Please do not type them here. I have logged a request so the Onboarding team can look at where yours is stuck.", slack: "Identity check stuck" },
+    stmt: { l: "Needs a statement", owner: "Operations", pri: "Low", kind: "ticket", reply: "I have logged a request for your statement with Operations.", slack: "Statement or document request" },
+    person: { l: "Wants to talk to a person", owner: "Support", pri: "Normal", kind: "ticket", reply: "Of course. I have asked a person to get in touch when the team is back.", slack: "User asked for a person" },
+    advice: { l: "Which deal should I pick?", owner: "Support", pri: "Normal", kind: "ticket", reply: "I cannot recommend or rank deals, call one safe, or predict returns. I can explain what the numbers on a card mean, or ask a person to get in touch.", slack: "User asked which deal to pick; wants a person" },
+    xirr: { l: "What does XIRR mean?", kind: "answer", reply: "XIRR is a yearly rate of return that counts when your money goes in and when it comes back. A deal that lasts 32 days still shows a yearly figure, so what you earn over those days is a small part of it. Returns are not guaranteed.", src: "From the help page “XIRR and returns” (demo)" },
+    date: { l: "When is my payout?", kind: "answer", reply: "Your payout date is shown on the investment's page, and I can read it from your account for you. In this demo I show it as a made-up date.", src: "From the logged-in account, read-only (demo)" }
+  };
+  var SEQ = ["late", "xirr", "kyc", "date", "stmt", "late", "xirr", "person", "advice", "kyc", "date", "dispute", "xirr", "stmt", "kyc", "late", "date", "person", "xirr", "advice", "kyc", "stmt", "date", "dispute"];
+  var NV = { n: 14, view: "today", sel: -1 };
+  function reqs() { var out = []; for (var i = 0; i < NV.n; i++) { var t = 18.5 + (i + 0.5) * (14.5 / NV.n); if (t >= 24) t -= 24; out.push({ i: i, k: SEQ[i], t: t }); } return out; }
+  function buildNight() {
+    $("#nreq").addEventListener("input", function (e) { NV.n = parseInt(e.target.value, 10); NV.sel = -1; renderNight(); });
+    $("#v-today").addEventListener("click", function () { NV.view = "today"; NV.sel = -1; renderNight(); }); $("#v-helper").addEventListener("click", function () { NV.view = "helper"; NV.sel = -1; renderNight(); });
+    renderNight();
+  }
+  function rbtn(r, done) {
+    var T = RT[r.k], b = h("button", { type: "button", class: "rq" + (T.pri === "High" ? " hi" : "") + (done ? " done" : ""), "aria-pressed": String(NV.sel === r.i) }, [T.l, h("small", { text: fmtTime(r.t) + (T.pri ? " · " + T.pri : "") + (done ? " · answered overnight" : "") })]);
+    b.addEventListener("click", function () { NV.sel = r.i; renderNight(true); }); return b;
+  }
+  function renderNight(keep) {
+    $("#nreqv").textContent = NV.n; $("#v-today").setAttribute("aria-pressed", String(NV.view === "today")); $("#v-helper").setAttribute("aria-pressed", String(NV.view === "helper"));
+    var R = reqs(), ans = R.filter(function (r) { return RT[r.k].kind === "answer"; }), tix = R.filter(function (r) { return RT[r.k].kind === "ticket"; }), hi = tix.filter(function (r) { return RT[r.k].pri === "High"; });
+    var k = $("#kpis"); k.textContent = "";
+    function kp(b, s) { k.appendChild(h("div", { class: "card kpi" }, [h("b", { text: b }), h("span", { text: s })])); }
+    if (NV.view === "today") { kp(String(R.length), "requests waiting for a person at 9:30 am"); kp("1 pile", "everything mixed together, oldest first"); kp(dur(9.5 + 24 - R[0].t > 24 ? 9.5 + 24 - R[0].t - 24 : 9.5 + 24 - R[0].t), "the oldest has waited at 9:30 am"); }
+    else { kp(String(tix.length), "need a person at 9:30 am (down from " + R.length + ")"); kp(String(ans.length), "answered overnight, no person needed"); kp(String(hi.length), "high-priority, already at the top of the right list"); }
+    var box = $("#kboard"); box.textContent = "";
+    if (NV.view === "today") {
+      var pile = h("div", { class: "pile" }); R.forEach(function (r) { pile.appendChild(rbtn(r, false)); });
+      box.appendChild(h("div", { class: "k-board today" }, [h("div", { class: "col" }, [h("h4", {}, [h("span", { text: "The morning pile" }), h("span", { text: R.length + " requests" })]), pile])]));
+      box.appendChild(h("p", { class: "small", style: "margin-top:8px", text: "Urgent ones (red edge) are mixed in with everything else, and someone has to read each one to find them." }));
+    } else {
+      var owners = ["Senior support", "Onboarding", "Operations", "Support"], g = h("div", { class: "k-board helper" });
+      owners.forEach(function (o) {
+        var items = tix.filter(function (r) { return RT[r.k].owner === o; }).sort(function (a, b) { var pa = RT[a.k].pri === "High" ? 0 : RT[a.k].pri === "Normal" ? 1 : 2, pb = RT[b.k].pri === "High" ? 0 : RT[b.k].pri === "Normal" ? 1 : 2; return pa - pb || a.i - b.i; });
+        var st = h("div", { class: "stack" }); items.forEach(function (r) { st.appendChild(rbtn(r, false)); }); if (!items.length) st.appendChild(h("p", { class: "small", text: "Nothing today." }));
+        g.appendChild(h("div", { class: "col" }, [h("h4", {}, [h("span", { text: o }), h("span", { text: String(items.length) })]), st]));
+      });
+      box.appendChild(g);
+      var done = h("div", { class: "col", style: "margin-top:12px" }, [h("h4", {}, [h("span", { text: "Answered overnight" }), h("span", { text: String(ans.length) })])]); var pile2 = h("div", { class: "pile" }); ans.forEach(function (r) { pile2.appendChild(rbtn(r, true)); }); done.appendChild(pile2); box.appendChild(done);
+    }
+    var d = $("#rdetail"); d.textContent = "";
+    if (NV.sel < 0 || NV.sel >= R.length) { d.appendChild(h("p", { class: "small", text: "Tap a request to see what the helper would do with it." })); return; }
+    var r = R[NV.sel], T = RT[r.k];
+    d.appendChild(h("div", { class: "lab", text: "Request raised at " + fmtTime(r.t) }));
+    d.appendChild(h("h3", { text: T.l }));
+    d.appendChild(h("div", { class: "msg me", text: "Customer: “" + T.l + "” (demo)" }));
+    var m = h("div", { class: "msg" }, [T.reply]); if (T.src) m.appendChild(h("div", { class: "small", style: "margin-top:4px", text: T.src })); d.appendChild(m);
+    if (T.kind === "ticket") {
+      d.appendChild(h("dl", { class: "kv", style: "margin-top:10px" }, [h("dt", { text: "Goes to" }), h("dd", { text: T.owner }), h("dt", { text: "Priority" }), h("dd", { text: T.pri }), h("dt", { text: "Reference" }), h("dd", { class: "mono", text: "UL-" + (2041 + r.i) }), h("dt", { text: "Slack says" }), h("dd", { text: T.slack + ". Never sent: PAN, Aadhaar, bank details." })]));
+    } else d.appendChild(h("p", { class: "small", style: "margin-top:8px", text: "No request is needed, so nothing waits for the morning." }));
+    d.appendChild(h("p", { class: "small", style: "margin-top:8px" }, [tag("proposed"), " Demo reply with made-up data; not Ultra’s system."]));
+  }
+
+  /* ---------- plan ---------- */
+  var PH = [
+    ["1. Prove it", "Screenshot the hours. Test Quick Chat offline. Size after-hours asks.", "Gate: after-hours demand confirmed", "Before building anything, show that people really do ask after hours and that the hours are what we think. Without this the case rests on one reported schedule and one screenshot."],
+    ["2. Route requests", "One automatic message. Slack and a Jira ticket. A reference number.", "Gate: no request lost by routing", "Build the automatic message (a “webhook”) that posts to Slack and opens a Jira ticket, with a reference number, a confirmation to the user, retries, and an alert if neither arrives. It helps the team the day it ships."],
+    ["3. Assist at night", "Simple terms and status. Hand over to a person. No deal advice.", "Gate: test questions and compliance pass", "The helper starts at night with low-risk questions and always offers “talk to a person”. It must get a set of real past questions right, with no wrong answers about money, and compliance must review its rules."],
+    ["4. Widen", "More request types. Account look-up. Add more help pages.", "Done when the earlier gates still hold", "Only then add more request types, more account look-ups and more help pages. Do not touch deal risk or which deal is better until compliance and the deals team decide what may be said."]
+  ];
+  var PS = { sel: 0, passed: 0 };
+  function renderPlan() {
+    var box = $("#phases"), det = $("#phasedetail"); box.textContent = ""; det.textContent = "";
+    PH.forEach(function (p, i) {
+      var locked = i > PS.passed, done = i < PS.passed;
+      var b = h("button", { type: "button", class: "ph" + (i === 2 ? " focus" : "") + (done ? " done" : "") + (locked ? " locked" : ""), "aria-pressed": String(i === PS.sel) }, [h("b", { text: p[0] }), h("span", { text: p[1] })]);
+      b.addEventListener("click", function () { PS.sel = i; renderPlan(); }); box.appendChild(b);
+    });
+    var p = PH[PS.sel], locked = PS.sel > PS.passed, done = PS.sel < PS.passed;
+    det.appendChild(h("h3", { text: p[0] })); det.appendChild(h("p", { style: "margin-top:6px", text: p[3] })); det.appendChild(h("p", { class: "mono small", style: "margin:10px 0", text: p[2] }));
+    if (locked) det.appendChild(h("p", { class: "note", text: "Locked. Pass the earlier gate first." }));
+    else if (done) det.appendChild(h("span", { class: "tag t-seen", text: "● Gate passed in this walk-through" }));
+    else if (PS.sel < 3) det.appendChild(h("button", { class: "btn", type: "button", text: "Pass this gate", onclick: function () { PS.passed++; PS.sel = Math.min(PS.sel + 1, 3); renderPlan(); } }));
+    else det.appendChild(h("p", { class: "note", text: "Last step. Keep checking the earlier gates as things widen." }));
+  }
+
+  /* ---------- rules ---------- */
+  var QS = [
+    ["What does XIRR mean?", 0, "The same answer for everyone, so the helper looks up the glossary page and answers from it."],
+    ["What do I need for the identity check?", 0, "The steps are the same for everyone, so they come from the help page."],
+    ["When will my payout arrive?", 1, "This is about one person's account. A help page only explains where the date is shown, so the helper reads it from the account (read-only, for the person logged in)."],
+    ["Which deal should I pick?", 2, "That would be investment advice. The helper politely declines and offers a person."],
+    ["Is my money safe?", 2, "No one should answer this with a promise. It goes to a person."],
+    ["How many days until my deal ends?", 1, "A fact about one person's investment, so it comes from their account."]
+  ];
+  var OPTS = [["Look up a help page", "Same answer for everyone (this is RAG)"], ["Look in the account", "A fact about this one person"], ["Decline and hand to a person", "Never guess"]];
+  var G = { i: 0, res: [] };
+  function renderGame() {
+    var box = $("#game"); box.textContent = "";
+    if (G.i >= QS.length) {
+      var sc = G.res.filter(Boolean).length;
+      box.appendChild(h("div", { class: "lab", text: "Result" })); box.appendChild(h("div", { class: "gq", text: "You got " + sc + " of " + QS.length + "." }));
+      box.appendChild(h("p", { text: "The rule: help pages for shared answers, the account for personal facts, a person for advice and worry." }));
+      box.appendChild(h("div", { style: "margin-top:12px" }, [h("button", { class: "btn", type: "button", text: "Play again", onclick: function () { G = { i: 0, res: [] }; renderGame(); } })])); return;
+    }
+    var q = QS[G.i], done = false;
+    box.appendChild(h("div", { class: "prog", "aria-hidden": "true" }, QS.map(function (_, k) { return h("i", { class: k < G.i ? (G.res[k] ? "ok" : "no") : (k === G.i ? "cur" : "") }); })));
+    box.appendChild(h("div", { class: "lab", text: "Question " + (G.i + 1) + " of " + QS.length })); box.appendChild(h("div", { class: "gq", text: "“" + q[0] + "”" }));
+    var fb = h("div", { class: "note", hidden: true, style: "margin-top:12px" }), opts = h("div", { class: "opts" });
+    OPTS.forEach(function (o, k) {
+      var b = h("button", { type: "button", class: "opt" }, [h("b", { text: o[0] }), h("span", { text: o[1] })]);
+      b.addEventListener("click", function () {
+        if (done) return; done = true; var ok = k === q[1]; G.res[G.i] = ok;
+        Array.prototype.forEach.call(opts.children, function (c, j) { c.disabled = true; if (j === q[1]) c.classList.add("right"); else if (j === k) c.classList.add("wrong"); });
+        fb.hidden = false; fb.textContent = (ok ? "Right. " : "Not quite. ") + q[2];
+        box.appendChild(h("div", { style: "margin-top:12px" }, [h("button", { class: "btn", type: "button", text: G.i + 1 < QS.length ? "Next question" : "See my score", onclick: function () { G.i++; renderGame(); } })]));
+      }); opts.appendChild(b);
+    });
+    box.appendChild(opts); box.appendChild(fb);
+  }
+  var RISKS = [
+    ["The helper gives investment advice by accident, in a product already named in a regulator’s order.", "Strict rule: never say which deal to pick or call one safe. Test with tricky questions. Have compliance review the rules."],
+    ["Wrong answers about money.", "Answer only from approved pages and the person’s own account. Hand over when unsure. Test on a few hundred real past questions."],
+    ["Private details (PAN, Aadhaar, bank details) leak.", "Decide what the helper may see, hide the rest, keep it out of Slack, and check India’s data-protection rules and the AI vendor’s data terms."],
+    ["People want a human for large sums.", "Show “talk to a person” on every screen."],
+    ["A failed automatic message quietly loses a request.", "Retries, a reference number for every request, and an alert if neither Slack nor Jira got it."],
+    ["The helper sounds more sure than it is.", "Name the source, say “I do not know”, and log a request."]
+  ];
+  function buildRisks() {
+    var g = $("#risks");
+    RISKS.forEach(function (r) {
+      var k = h("span", { class: "k", text: "The risk" }), t = h("span", { text: r[0] }), b = h("button", { type: "button", class: "risk", "aria-pressed": "false" }, [k, t]);
+      b.addEventListener("click", function () { var on = b.getAttribute("aria-pressed") === "true"; b.setAttribute("aria-pressed", String(!on)); k.textContent = on ? "The risk" : "Our answer"; t.textContent = on ? r[0] : r[1]; }); g.appendChild(b);
+    });
+  }
+
+  /* ---------- check ---------- */
+  var TODO = [
+    "The getultra.club page text could not be read with our tools, so its sections, prices and claims are unseen.",
+    "The support hours (9:30 am to 6:30 pm), weekend cover, and what Quick Chat does while the agent is offline.",
+    "Reviews: the App Store page shows no ratings, and Google Play and Reddit have not been read for support complaints.",
+    "The deal detail page, the identity check, the steps up to payment, the Dashboard tab and the mobile app.",
+    "Whether risk warnings or a regulator registration appear anywhere in the product.",
+    "What happened after SEBI’s interim order of 18 Nov 2024. Check SEBI’s website for a final order.",
+    "The company’s figures (4.5 stars, 100k+ users, ₹1500 Cr+, 11 to 15% yearly returns) and its founding year, where sources disagree between 2021 and 2022."
+  ];
+  function buildTodo() {
+    var n = 0, box = $("#todo");
+    function upd() { $("#tm").style.width = (n / TODO.length * 100) + "%"; $("#ttxt").textContent = n + " of " + TODO.length + " checked. Also unknown, and needing the company’s own numbers: how Ultra earns, how many support contacts it gets, and what share arrive after hours."; }
+    TODO.forEach(function (t) {
+      var inp = h("input", { type: "checkbox" }), lab = h("label", {}, [inp, h("span", { text: t })]);
+      inp.addEventListener("change", function () { lab.classList.toggle("on", inp.checked); n += inp.checked ? 1 : -1; upd(); }); box.appendChild(lab);
+    }); upd();
+  }
+
+  /* ---------- boot ---------- */
+  buildTabs(); buildOverview(); buildBoard(); buildNight(); renderPlan(); renderGame(); buildRisks(); buildTodo();
+  var start = 0, hs = (location.hash || "").slice(1); TABS.forEach(function (t, i) { if (t[0] === hs) start = i; });
+  show(start, false);
+  window.addEventListener("hashchange", function () { var x = (location.hash || "").slice(1); TABS.forEach(function (t, i) { if (t[0] === x) show(i, false); }); });
+})();
+</script>
+</body></html>
